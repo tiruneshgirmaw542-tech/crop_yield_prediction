@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Production Predictor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #1a3d2a;
+        background-image:
+          radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 35%),
+          linear-gradient(135deg, #316a3c 0%, #2f5c33 35%, #1c3a23 100%),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 120'%3E%3Cg fill='rgba(255,255,255,0.08)'%3E%3Cpath d='M20 90 C40 45 70 40 90 80 C100 60 120 40 140 70 C100 40 75 50 50 80 C35 65 15 75 20 90 Z'/%3E%3Cpath d='M10 60 C35 25 55 30 75 55 C95 30 120 15 150 50 C115 15 85 25 55 60 C40 45 20 50 10 60 Z'/%3E%3C/g%3E%3C/svg%3E");
+        background-size: cover;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        color: #fff;
+        position: relative;
+      }
+
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+          radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 35%),
+          radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 30%),
+          radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.04) 0%, transparent 40%);
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(74, 124, 89, 0.2);
+      }
+
+      header {
+        background: linear-gradient(135deg, #8fbc8f 0%, #4f7a3d 45%, #275228 100%);
+        color: white;
+        padding: 45px 30px;
+        text-align: center;
+        position: relative;
+        border-bottom: 3px solid #d4af37;
+        overflow: hidden;
+      }
+
+      header::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        left: -10%;
+        width: 140%;
+        height: 140%;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 140'%3E%3Cg fill='rgba(255,255,255,0.12)'%3E%3Cpath d='M40 100 C65 40 105 40 130 100 C110 60 70 60 40 100 Z'/%3E%3Cpath d='M20 70 C50 20 90 30 110 75 C90 40 60 40 20 70 Z'/%3E%3Cpath d='M80 120 C110 70 140 70 160 120 C140 80 105 90 80 120 Z'/%3E%3C/g%3E%3C/svg%3E");
+        opacity: 0.45;
+        transform: scale(1.1);
+        pointer-events: none;
+      }
+
+      header h1,
+      header p {
+        position: relative;
+        z-index: 1;
+      }
+
+      header p {
+        margin: 16px auto 0;
+        max-width: 680px;
+        color: #f0f9f0;
+        font-size: 1.05rem;
+        opacity: 0.95;
+      }
+
+      header h1 {
+        margin: 0 0 10px 0;
+        font-size: 2.5em;
+        font-weight: 300;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        margin: 10px 0;
+        opacity: 0.9;
+        font-size: 1.1em;
+      }
+
+      .info-section {
+        background: linear-gradient(135deg, #f0f8e7 0%, #e8f5e8 100%);
+        padding: 20px 30px;
+        border-bottom: 2px solid #8fbc8f;
+      }
+
+      .info-section p {
+        margin: 5px 0;
+        color: #2d5a3d;
+        font-size: 0.95em;
+      }
+
+      main {
+        padding: 40px 30px;
+      }
+
+      .status {
+        margin: 20px 0;
+        padding: 20px;
+        border-radius: 12px;
+        border: none;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .status::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: currentColor;
+      }
+
+      .status.error {
+        background: linear-gradient(135deg, #deb887 0%, #cd853f 100%);
+        color: #8b4513;
+        border-left: 4px solid #daa520;
+      }
+
+      .status.success {
+        background: linear-gradient(135deg, #90ee90 0%, #32cd32 100%);
+        color: #006400;
+        border-left: 4px solid #228b22;
+      }
+
+      .status strong {
+        display: block;
+        font-size: 1.2em;
+        margin-bottom: 8px;
+      }
+
+      .status small {
+        display: block;
+        opacity: 0.8;
+        font-style: italic;
+      }
+
+      form {
+        display: grid;
+        gap: 20px;
+        margin-top: 30px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      label span {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.95em;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      select {
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        background: white;
+      }
+
+      input[type="text"]:focus,
+      input[type="number"]:focus,
+      select:focus {
+        outline: none;
+        border-color: #8fbc8f;
+        box-shadow: 0 0 0 3px rgba(143, 188, 143, 0.2);
+        transform: translateY(-1px);
+      }
+
+      input::placeholder {
+        color: #adb5bd;
+        opacity: 0.7;
+      }
+
+      button {
+        background: linear-gradient(135deg, #8fbc8f 0%, #556b2f 100%);
+        color: white;
+        border: none;
+        padding: 16px 32px;
+        border-radius: 50px;
+        font-size: 1.1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(85, 107, 47, 0.4);
+        margin-top: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: 2px solid #daa520;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(85, 107, 47, 0.6);
+        background: linear-gradient(135deg, #556b2f 0%, #8fbc8f 100%);
+        border-color: #ffd700;
+      }
+
+      button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(85, 107, 47, 0.4);
+      }
+
+      .back-button {
+        background: linear-gradient(135deg, #4a90e2 0%, #357ab8 100%);
+        border-color: #2d6bb7;
+        margin-left: 12px;
+      }
+
+      .back-button:hover {
+        background: linear-gradient(135deg, #357ab8 0%, #4a90e2 100%);
+      }
+
+      .back-button:active {
+        box-shadow: 0 2px 8px rgba(45, 107, 183, 0.4);
+      }
+
+      button i {
+        margin-right: 8px;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .status {
+        animation: fadeInUp 0.5s ease-out;
+      }
+
+      .container {
+        animation: fadeInUp 0.8s ease-out;
+      }
+
+      .example-highlight {
+        background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 4px solid #fdcb6e;
+      }
+
+      .example-highlight em {
+        font-weight: 600;
+        color: #d63031;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1><i class="fas fa-leaf"></i> Crop Production Predictor</h1>
+        <p>Harness the power of data to optimize your agricultural yields</p>
+      </header>
+
+      {% if error %}
+      <section class="status error">
+        <strong><i class="fas fa-exclamation-triangle"></i> Error:</strong> {{ error }}
+      </section>
+      {% endif %}
+
+      {% if prediction %}
+      <section class="status success">
+        <strong><i class="fas fa-check-circle"></i> Predicted Annual Production:</strong> {{ "{:,.0f}".format(prediction) }} tonnes
+        <small>This represents the estimated total crop production for the specified conditions.</small>
+      </section>
+      {% endif %}
+
+      <main>
+        <form method="post" action="/">
+          <div class="form-row">
+            <label>
+              <span><i class="fas fa-globe"></i> Area (Country)</span>
+              <input type="text" name="Area" required value="{{ values.Area }}" placeholder="e.g., India">
+            </label>
+            <label>
+              <span><i class="fas fa-seedling"></i> Item (Crop)</span>
+              <select name="Item" required>
+                <option value="">Select a crop</option>
+                <option value="Cassava" {% if values.Item == 'Cassava' %}selected{% endif %}>Cassava</option>
+                <option value="Maize" {% if values.Item == 'Maize' %}selected{% endif %}>Maize</option>
+                <option value="Plantains and others" {% if values.Item == 'Plantains and others' %}selected{% endif %}>Plantains and others</option>
+                <option value="Potatoes" {% if values.Item == 'Potatoes' %}selected{% endif %}>Potatoes</option>
+                <option value="Rice, paddy" {% if values.Item == 'Rice, paddy' %}selected{% endif %}>Rice, paddy</option>
+                <option value="Sorghum" {% if values.Item == 'Sorghum' %}selected{% endif %}>Sorghum</option>
+                <option value="Soybeans" {% if values.Item == 'Soybeans' %}selected{% endif %}>Soybeans</option>
+                <option value="Sweet potatoes" {% if values.Item == 'Sweet potatoes' %}selected{% endif %}>Sweet potatoes</option>
+                <option value="Wheat" {% if values.Item == 'Wheat' %}selected{% endif %}>Wheat</option>
+                <option value="Yams" {% if values.Item == 'Yams' %}selected{% endif %}>Yams</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>
+              <span><i class="fas fa-calendar"></i> Year</span>
+              <input type="number" name="Year" required value="{{ values.Year }}" placeholder="e.g., 2023">
+            </label>
+            <label>
+              <span><i class="fas fa-cloud-rain"></i> Average Rainfall (mm/year)</span>
+              <input type="number" name="average_rain_fall_mm_per_year" step="any" required value="{{ values.average_rain_fall_mm_per_year }}" placeholder="e.g., 800">
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>
+              <span><i class="fas fa-flask"></i> Pesticides Used (tonnes)</span>
+              <input type="number" name="pesticides_tonnes" step="any" required value="{{ values.pesticides_tonnes }}" placeholder="e.g., 0.25">
+            </label>
+            <label>
+              <span><i class="fas fa-thermometer-half"></i> Average Temperature (°C)</span>
+              <input type="number" name="avg_temp" step="any" required value="{{ values.avg_temp }}" placeholder="e.g., 25.0">
+            </label>
+          </div>
+
+              <button type="submit">
+            <i class="fas fa-magic"></i> Predict Crop Production
+          </button>
+          <button type="button" class="back-button" onclick="window.history.back()">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+        </form>
+      </main>
+    </div>
+  </body>
+</html>
