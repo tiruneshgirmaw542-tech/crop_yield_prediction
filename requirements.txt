@@ -2,3 +2,4 @@ flask
 streamlit
 pandas
 scikit-learn
+gunicorn
